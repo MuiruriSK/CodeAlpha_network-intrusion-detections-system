@@ -67,7 +67,7 @@ class PacketAnalyzer:
                 # SYN flood detection
                 if packet[TCP].flags == 2:  # SYN flag
                     self.suspicious_patterns['syn_flood'] += 1
-                    if self.suspicious_patterns['syn_flood'] > 50:
+                    if self.suspicious_patterns['syn_flood'] > 10:  # Lowered from 50 for easier testing
                         threats.append("SYN flood attack detected")
             
             # UDP analysis
@@ -108,19 +108,15 @@ def get_windows_interface():
         # Try to get interfaces using psutil (more reliable on Windows)
         import psutil
         interfaces = psutil.net_if_addrs()
-        
-        # Look for active interfaces
+        # Look for active interfaces with friendly names
         for interface_name in interfaces.keys():
             if interface_name.lower() not in ['loopback', 'lo']:
-                # Try to get the interface details
                 try:
-                    # Test if this interface works with Scapy
                     test_packets = sniff(iface=interface_name, count=1, timeout=1)
                     if test_packets:
                         return interface_name
                 except:
                     continue
-        
         # Fallback: try common interface names
         common_names = ['Ethernet', 'Wi-Fi', 'Local Area Connection', 'Wireless Network Connection']
         for name in common_names:
@@ -130,7 +126,15 @@ def get_windows_interface():
                     return name
             except:
                 continue
-                
+        # If still not found, try GUID-like interfaces (auto-select first available)
+        for interface_name in interfaces.keys():
+            if interface_name.startswith('{') and interface_name.endswith('}'):
+                try:
+                    test_packets = sniff(iface=interface_name, count=1, timeout=1)
+                    if test_packets is not None:
+                        return interface_name
+                except:
+                    continue
         return None
     except Exception as e:
         print(f"Warning: Could not detect Windows interface: {e}")
@@ -220,8 +224,9 @@ class NIDSEngine:
         """Callback for each captured packet"""
         if self.is_running:
             self.packet_queue.append(packet)
-            if len(self.packet_queue) > 1000:  # Prevent memory overflow
-                self.packet_queue.pop(0)
+            # Removed queue limit for unlimited packet capture
+            # if len(self.packet_queue) > 1000:  # Prevent memory overflow
+            #     self.packet_queue.pop(0)
     
     def _analyze_packets(self):
         """Analyze packets in the queue"""

@@ -5,11 +5,11 @@ A comprehensive, real-time network intrusion detection system optimized for Wind
 ## 🛡️ Features
 
 ### Core Detection Capabilities
-- **Real-time Packet Monitoring**: Captures and analyzes network packets in real-time
-- **Windows-Optimized Interface Detection**: Automatic detection of Wi-Fi and Ethernet interfaces
+- **Real-time Packet Monitoring**: Captures and analyzes network packets in real-time with unlimited packet capture
+- **Automatic Interface Detection**: Automatically detects and selects the best network interface (Wi-Fi, Ethernet, or GUID interfaces)
 - **Multiple Threat Detection**:
   - Port scanning detection
-  - SYN flood attacks
+  - SYN flood attacks (detection threshold: 10 packets)
   - Large packet floods
   - Suspicious IP detection
   - DNS amplification attacks
@@ -17,7 +17,7 @@ A comprehensive, real-time network intrusion detection system optimized for Wind
   - HTTP anomaly detection
 
 ### Windows-Specific Features
-- **Automatic Interface Detection**: No need to manually specify network interfaces
+- **Automatic Interface Detection**: No need to manually specify network interfaces - works with friendly names and GUID interfaces
 - **Windows Firewall Integration**: Leverage Windows Firewall for threat response
 - **Windows Event Log Integration**: Log security events to Windows Event Log
 - **Administrator Privilege Detection**: Automatic detection and warnings
@@ -53,11 +53,11 @@ A comprehensive, real-time network intrusion detection system optimized for Wind
 - **Python**: Python 3.7 or higher
 - **Administrator Privileges**: Required for packet capture functionality
 - **Network Interface**: Active Wi-Fi or Ethernet connection
+- **Npcap/WinPcap**: For enhanced packet capture capabilities
 
 ### Windows-Specific Requirements
 - **Windows Defender**: Compatible with Windows Defender (not required)
 - **Windows Firewall**: Can integrate with Windows Firewall for responses
-- **Npcap**: Recommended for enhanced packet capture capabilities
 - **PowerShell**: For advanced configuration and management
 
 ## 🚀 Installation
@@ -81,7 +81,7 @@ pip install -r requirements.txt
 
 ### 4. Verify Installation
 ```powershell
-python main.py --check-system
+python debug_nids.py
 ```
 
 ## 🎯 Usage
@@ -94,10 +94,10 @@ python main.py --check-system
 python main.py
 ```
 
-#### Check System Requirements
+#### Debug System and Check Interfaces
 ```powershell
-# Verify Windows compatibility and privileges
-python main.py --check-system
+# Verify Windows compatibility, privileges, and interfaces
+python debug_nids.py
 ```
 
 #### List Available Network Interfaces
@@ -128,10 +128,13 @@ python main.py -i "Wi-Fi"
 
 #### Generate Test Threats
 ```powershell
-# Test threat detection capabilities
-python test_threats.py port_scan
-python test_threats.py syn_flood
-python test_threats.py all
+# Test threat detection capabilities with specific interface
+python test_threats.py --test syn_flood --iface "Wi-Fi"
+python test_threats.py --test port_scan --iface "Wi-Fi"
+python test_threats.py --test all --iface "Wi-Fi"
+
+# Or let it auto-detect interface
+python test_threats.py --test syn_flood
 ```
 
 ## 🖥️ Dashboard Access
@@ -156,7 +159,7 @@ http://localhost:5000
 
 ### Windows-Specific Configuration
 The system automatically detects and optimizes for Windows:
-- **Interface Detection**: Automatically finds Wi-Fi and Ethernet interfaces
+- **Interface Detection**: Automatically finds Wi-Fi, Ethernet, and GUID interfaces
 - **Privilege Checking**: Verifies administrator privileges
 - **Windows Integration**: Enables Windows Firewall and Event Log features
 
@@ -182,11 +185,18 @@ notepad nids_actions.json
 **Solution**: Run PowerShell as Administrator
 
 #### Interface Detection Issues
-**Problem**: No interfaces detected
+**Problem**: No interfaces detected or wrong interface selected
 **Solution**: 
-1. Check network adapter status in Windows
-2. Run `python main.py --list-interfaces`
+1. Run `python debug_nids.py` to check available interfaces
+2. Check network adapter status in Windows
 3. Manually specify interface: `python main.py -i "Wi-Fi"`
+
+#### Threat Generator Interface Issues
+**Problem**: Threats not appearing in dashboard
+**Solution**:
+1. Use the same interface for both NIDS and threat generator
+2. Check the interface name printed by NIDS at startup
+3. Use: `python test_threats.py --test syn_flood --iface "INTERFACE_NAME"`
 
 #### Firewall Blocking
 **Problem**: Dashboard not accessible
@@ -207,7 +217,7 @@ notepad nids_actions.json
 1. **Run as Administrator**: Ensures full packet capture capabilities
 2. **Close Unnecessary Applications**: Free up system resources
 3. **Use Wired Connection**: Ethernet provides more stable monitoring
-4. **Adjust Packet Queue Size**: Modify in `nids_config.json` if needed
+4. **Unlimited Packet Capture**: System now captures unlimited packets (monitor memory usage)
 
 ## 📊 Monitoring and Alerts
 
@@ -275,6 +285,7 @@ pip install -r requirements.txt
 
 # Run tests
 python test_nids.py
+python test_threats.py --test all
 ```
 
 ## 📄 License
@@ -287,14 +298,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For Windows-specific issues:
 1. Check the troubleshooting section above
 2. Verify administrator privileges
-3. Test with `python main.py --check-system`
+3. Test with `python debug_nids.py`
 4. Review Windows Event Log for errors
 
 ### General Support
 - **Documentation**: Check this README and inline code comments
 - **Issues**: Report issues on the project repository
 - **Testing**: Use `python test_nids.py` to verify functionality
+- **Debugging**: Use `python debug_nids.py` for system diagnostics
 
 ---
 
-**Note**: This NIDS is optimized for Windows systems and provides enhanced Windows integration features while maintaining compatibility with other operating systems. 
+**Note**: This NIDS is optimized for Windows systems and provides enhanced Windows integration features while maintaining compatibility with other operating systems. The system now features automatic interface detection, unlimited packet capture, and improved threat detection thresholds for better testing and monitoring capabilities. 
