@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIDS Dashboard - Network Intrusion Detection System (Windows Edition)</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header .status {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .windows-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .windows-info h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .windows-info .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #2196f3;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .alerts-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background: #f8f9fa;
+        }
+
+        .alert-high {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .alert-medium {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .alert-low {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .alert-time {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+
+        .alert-threat {
+            font-weight: 600;
+            margin: 5px 0;
+        }
+
+        .alert-source {
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .chart-container {
+            height: 400px;
+            margin-top: 15px;
+        }
+
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #0056b3;
+        }
+
+        .windows-badge {
+            background: #0078d4;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-shield-alt"></i>
+                NIDS Dashboard
+                {% if is_windows %}
+                <span class="windows-badge">Windows Edition</span>
+                {% endif %}
+            </h1>
+            <div class="status">
+                <div class="status-indicator status-active" id="connection-status">
+                    <i class="fas fa-circle"></i>
+                    Connected
+                </div>
+                <div class="status-indicator" id="system-status">
+                    <i class="fas fa-server"></i>
+                    System: {{ system_info.platform }}
+                </div>
+                <div class="status-indicator" id="interface-status">
+                    <i class="fas fa-network-wired"></i>
+                    Interface: Auto-detected
+                </div>
+            </div>
+            
+            {% if is_windows %}
+            <div class="windows-info">
+                <h4><i class="fab fa-windows"></i> Windows System Information</h4>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Platform:</span>
+                        <span class="info-value">{{ system_info.platform }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Version:</span>
+                        <span class="info-value">{{ system_info.platform_version }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Python:</span>
+                        <span class="info-value">{{ system_info.python_version }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Admin Rights:</span>
+                        <span class="info-value" id="admin-status">Checking...</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3><i class="fas fa-chart-bar"></i> Packet Statistics</h3>
+                <div class="stats-grid" id="packet-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="total-packets">0</div>
+                        <div class="stat-label">Total Packets</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="tcp-packets">0</div>
+                        <div class="stat-label">TCP Packets</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="udp-packets">0</div>
+                        <div class="stat-label">UDP Packets</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="icmp-packets">0</div>
+                        <div class="stat-label">ICMP Packets</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="suspicious-packets">0</div>
+                        <div class="stat-label">Suspicious</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-exclamation-triangle"></i> Threat Statistics</h3>
+                <div class="stats-grid" id="threat-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="port-scan">0</div>
+                        <div class="stat-label">Port Scans</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="syn-flood">0</div>
+                        <div class="stat-label">SYN Floods</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="large-packet">0</div>
+                        <div class="stat-label">Large Packets</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="suspicious-ip">0</div>
+                        <div class="stat-label">Suspicious IPs</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="dns-amplification">0</div>
+                        <div class="stat-label">DNS Attacks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="icmp-flood">0</div>
+                        <div class="stat-label">ICMP Floods</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-shield-alt"></i> Response Actions</h3>
+                <div class="stats-grid" id="response-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="total-responses">0</div>
+                        <div class="stat-label">Total Responses</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="blocked-ips">0</div>
+                        <div class="stat-label">Blocked IPs</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="rate-limited">0</div>
+                        <div class="stat-label">Rate Limited</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="connections-killed">0</div>
+                        <div class="stat-label">Connections Killed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>
+                    <i class="fas fa-chart-pie"></i> Threat Distribution
+                    <button class="refresh-btn" onclick="refreshThreatChart()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </h3>
+                <div class="chart-container" id="threat-chart"></div>
+            </div>
+
+            <div class="card">
+                <h3>
+                    <i class="fas fa-chart-line"></i> Network Traffic
+                    <button class="refresh-btn" onclick="refreshTrafficChart()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </h3>
+                <div class="chart-container" id="traffic-chart"></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>
+                    <i class="fas fa-clock"></i> Alerts Timeline
+                    <button class="refresh-btn" onclick="refreshAlertsTimeline()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </h3>
+                <div class="chart-container" id="alerts-timeline"></div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
+                <div class="alerts-container" id="recent-alerts">
+                    <p style="text-align: center; color: #6c757d; padding: 20px;">
+                        No alerts yet. The system is monitoring for threats...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Connection status
+        socket.on('connect', function() {
+            document.getElementById('connection-status').innerHTML = '<i class="fas fa-circle"></i> Connected';
+            document.getElementById('connection-status').className = 'status-indicator status-active';
+        });
+        
+        socket.on('disconnect', function() {
+            document.getElementById('connection-status').innerHTML = '<i class="fas fa-circle"></i> Disconnected';
+            document.getElementById('connection-status').className = 'status-indicator status-inactive';
+        });
+
+        // Load initial data
+        loadDashboardData();
+        
+        // Check Windows admin status
+        {% if is_windows %}
+        checkWindowsStatus();
+        {% endif %}
+
+        // Real-time updates
+        socket.on('packet_stats_update', function(data) {
+            updatePacketStats(data);
+        });
+        
+        socket.on('response_stats_update', function(data) {
+            updateResponseStats(data);
+        });
+        
+        socket.on('new_alert', function(alert) {
+            addAlert(alert);
+        });
+
+        function loadDashboardData() {
+            // Load statistics
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    updatePacketStats(data.packet_stats);
+                    updateThreatStats(data.threat_stats);
+                    updateResponseStats(data.response_stats);
+                });
+            
+            // Load charts
+            loadThreatChart();
+            loadTrafficChart();
+            loadAlertsTimeline();
+            loadRecentAlerts();
+        }
+
+        function updatePacketStats(stats) {
+            document.getElementById('total-packets').textContent = stats.total_packets;
+            document.getElementById('tcp-packets').textContent = stats.tcp_packets;
+            document.getElementById('udp-packets').textContent = stats.udp_packets;
+            document.getElementById('icmp-packets').textContent = stats.icmp_packets;
+            document.getElementById('suspicious-packets').textContent = stats.suspicious_packets;
+        }
+
+        function updateThreatStats(stats) {
+            document.getElementById('port-scan').textContent = stats.port_scan;
+            document.getElementById('syn-flood').textContent = stats.syn_flood;
+            document.getElementById('large-packet').textContent = stats.large_packet;
+            document.getElementById('suspicious-ip').textContent = stats.suspicious_ip;
+            document.getElementById('dns-amplification').textContent = stats.dns_amplification;
+            document.getElementById('icmp-flood').textContent = stats.icmp_flood;
+        }
+
+        function updateResponseStats(stats) {
+            document.getElementById('total-responses').textContent = stats.total_responses;
+            document.getElementById('blocked-ips').textContent = stats.blocked_ips;
+            document.getElementById('rate-limited').textContent = stats.rate_limited;
+            document.getElementById('connections-killed').textContent = stats.connections_killed;
+        }
+
+        function loadThreatChart() {
+            fetch('/api/charts/threats')
+                .then(response => response.json())
+                .then(data => {
+                    Plotly.newPlot('threat-chart', data.data, data.layout);
+                });
+        }
+
+        function loadTrafficChart() {
+            fetch('/api/charts/traffic')
+                .then(response => response.json())
+                .then(data => {
+                    Plotly.newPlot('traffic-chart', data.data, data.layout);
+                });
+        }
+
+        function loadAlertsTimeline() {
+            fetch('/api/charts/alerts_timeline')
+                .then(response => response.json())
+                .then(data => {
+                    Plotly.newPlot('alerts-timeline', data.data, data.layout);
+                });
+        }
+
+        function loadRecentAlerts() {
+            fetch('/api/alerts?limit=10')
+                .then(response => response.json())
+                .then(alerts => {
+                    const container = document.getElementById('recent-alerts');
+                    if (alerts.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 20px;">No alerts yet. The system is monitoring for threats...</p>';
+                    } else {
+                        container.innerHTML = alerts.map(alert => createAlertHTML(alert)).join('');
+                    }
+                });
+        }
+
+        function createAlertHTML(alert) {
+            const severityClass = alert.severity === 'HIGH' ? 'alert-high' : 
+                                alert.severity === 'MEDIUM' ? 'alert-medium' : 'alert-low';
+            
+            return `
+                <div class="alert-item ${severityClass}">
+                    <div class="alert-time">${alert.timestamp}</div>
+                    <div class="alert-threat">${alert.threat}</div>
+                    <div class="alert-source">Source: ${alert.packet_info?.src_ip || 'Unknown'}</div>
+                </div>
+            `;
+        }
+
+        function addAlert(alert) {
+            const container = document.getElementById('recent-alerts');
+            const alertHTML = createAlertHTML(alert);
+            
+            // Remove "no alerts" message if present
+            if (container.querySelector('p')) {
+                container.innerHTML = '';
+            }
+            
+            // Add new alert at the top
+            container.insertAdjacentHTML('afterbegin', alertHTML);
+            
+            // Keep only last 10 alerts
+            const alerts = container.querySelectorAll('.alert-item');
+            if (alerts.length > 10) {
+                alerts[alerts.length - 1].remove();
+            }
+        }
+
+        function refreshThreatChart() {
+            loadThreatChart();
+        }
+
+        function refreshTrafficChart() {
+            loadTrafficChart();
+        }
+
+        function refreshAlertsTimeline() {
+            loadAlertsTimeline();
+        }
+
+        {% if is_windows %}
+        function checkWindowsStatus() {
+            fetch('/api/windows/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('admin-status').textContent = 'Error';
+                        document.getElementById('admin-status').style.color = '#dc3545';
+                    } else {
+                        document.getElementById('admin-status').textContent = data.is_admin ? 'Yes' : 'No';
+                        document.getElementById('admin-status').style.color = data.is_admin ? '#28a745' : '#dc3545';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('admin-status').textContent = 'Unknown';
+                    document.getElementById('admin-status').style.color = '#6c757d';
+                });
+        }
+        {% endif %}
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboardData, 30000);
+    </script>
+</body>
+</html> 

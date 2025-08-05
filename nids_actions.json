@@ -1,0 +1,65 @@
+{
+  "action_1": {
+    "action_id": "action_1",
+    "name": "Block IP",
+    "description": "Block suspicious IP address",
+    "action_type": "block_ip",
+    "parameters": {
+      "duration": 3600
+    },
+    "execution_count": 0,
+    "last_executed": null
+  },
+  "action_2": {
+    "action_id": "action_2",
+    "name": "Log Alert",
+    "description": "Log the alert for analysis",
+    "action_type": "log_alert",
+    "parameters": {},
+    "execution_count": 0,
+    "last_executed": null
+  },
+  "action_3": {
+    "action_id": "action_3",
+    "name": "Send Email Alert",
+    "description": "Send email notification",
+    "action_type": "email_alert",
+    "parameters": {
+      "recipient": "admin@example.com"
+    },
+    "execution_count": 0,
+    "last_executed": null
+  },
+  "action_4": {
+    "action_id": "action_4",
+    "name": "Rate Limit",
+    "description": "Apply rate limiting to source",
+    "action_type": "rate_limit",
+    "parameters": {
+      "window": 300,
+      "max_requests": 100
+    },
+    "execution_count": 0,
+    "last_executed": null
+  },
+  "action_5": {
+    "action_id": "action_5",
+    "name": "Kill Connection",
+    "description": "Terminate suspicious connection",
+    "action_type": "kill_connection",
+    "parameters": {},
+    "execution_count": 0,
+    "last_executed": null
+  },
+  "action_6": {
+    "action_id": "action_6",
+    "name": "Increase Monitoring",
+    "description": "Increase monitoring level for source",
+    "action_type": "increase_monitoring",
+    "parameters": {
+      "duration": 1800
+    },
+    "execution_count": 0,
+    "last_executed": null
+  }
+}

@@ -1,0 +1,9 @@
+nids_env/
+# Common Python ignores
+*.egg-info/
+dist/
+build/
+.eggs/
+.idea/
+.vscode/
+

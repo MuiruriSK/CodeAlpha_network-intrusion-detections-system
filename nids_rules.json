@@ -1,0 +1,105 @@
+{
+  "rule_1": {
+    "rule_id": "rule_1",
+    "name": "Port Scan Detection",
+    "description": "Detect rapid port scanning from single source",
+    "conditions": {
+      "type": "port_scan",
+      "threshold": 10,
+      "time_window": 60
+    },
+    "action": "alert",
+    "enabled": true,
+    "hit_count": 0,
+    "last_hit": null
+  },
+  "rule_2": {
+    "rule_id": "rule_2",
+    "name": "SYN Flood Detection",
+    "description": "Detect SYN flood attacks",
+    "conditions": {
+      "type": "syn_flood",
+      "threshold": 50,
+      "time_window": 30
+    },
+    "action": "alert",
+    "enabled": true,
+    "hit_count": 0,
+    "last_hit": null
+  },
+  "rule_3": {
+    "rule_id": "rule_3",
+    "name": "Large Packet Detection",
+    "description": "Detect abnormally large packets",
+    "conditions": {
+      "type": "large_packet",
+      "min_size": 1500
+    },
+    "action": "alert",
+    "enabled": true,
+    "hit_count": 0,
+    "last_hit": null
+  },
+  "rule_4": {
+    "rule_id": "rule_4",
+    "name": "Suspicious IP Detection",
+    "description": "Detect traffic from known suspicious IPs",
+    "conditions": {
+      "type": "suspicious_ip",
+      "ip_list": [
+        "192.168.1.100",
+        "10.0.0.50"
+      ]
+    },
+    "action": "alert",
+    "enabled": true,
+    "hit_count": 0,
+    "last_hit": null
+  },
+  "rule_5": {
+    "rule_id": "rule_5",
+    "name": "DNS Amplification Detection",
+    "description": "Detect potential DNS amplification attacks",
+    "conditions": {
+      "type": "dns_amplification",
+      "min_size": 512,
+      "port": 53
+    },
+    "action": "alert",
+    "enabled": true,
+    "hit_count": 0,
+    "last_hit": null
+  },
+  "rule_6": {
+    "rule_id": "rule_6",
+    "name": "ICMP Flood Detection",
+    "description": "Detect ICMP ping floods",
+    "conditions": {
+      "type": "icmp_flood",
+      "threshold": 100,
+      "time_window": 60
+    },
+    "action": "alert",
+    "enabled": true,
+    "hit_count": 0,
+    "last_hit": null
+  },
+  "rule_7": {
+    "rule_id": "rule_7",
+    "name": "HTTP Anomaly Detection",
+    "description": "Detect suspicious HTTP traffic patterns",
+    "conditions": {
+      "type": "http_anomaly",
+      "suspicious_patterns": [
+        "admin",
+        "login",
+        "wp-admin",
+        "phpmyadmin"
+      ]
+    },
+    "action": "alert",
+    "enabled": true,
+    "hit_count": 0,
+    "last_hit": null
+  }
+}
